@@ -8,5 +8,6 @@ Keys = {
     "movef": "ctrl+f", #move forward
     "moveb": "ctrl+b", #move back
     "moven": "ctrl+n", #move to the new line
-    "movep": "ctrl+p"  #move to the previous line
+    "movep": "ctrl+p", #move to the previous line
+    "open":  "ctrl+o"
        }

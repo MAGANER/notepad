@@ -4,6 +4,7 @@ import keyboard as kb
 from msvcrt import kbhit
 from Keys import Keys
 from FileLoader import load_file
+from os.path import isfile
 
 class CursorPos():
     def __init__(self):
@@ -46,7 +47,7 @@ class MainBuffer():
             screen.refresh()
             y_pos+=1
     def print_cursor(self,screen):
-        char = ''
+        char = ' '
         if len(self.lines) > 0 and len(self.lines[self.cursor_pos.y]) > 0:
             char = self.lines[self.cursor_pos.y][self.cursor_pos.x]
         screen.addstr(self.cursor_pos.y,self.cursor_pos.x,char,cs.color_pair(2))
@@ -69,18 +70,26 @@ class MainBuffer():
         if kb.is_pressed(Keys["open"]):
             height, width = screen.getmaxyx()
             y_pos = height - 1 
-            self.action_line ="enter file path:"
+            self.action_line ="enter file path: "
             self.print_action_line(screen)
             
-            x_pos = len(self.action_line)+1
-            
-            #self.cursor_pos.x = x_pos-1
-            #self.cursor_pos.y = y_pos
-            #self.print_cursor(screen)
-            
-            self.lines.clear()
-            screen.clear()
-        
+            self.cursor_pos.x = 16
+            self.cursor_pos.y = y_pos
+            cs.echo()
+            path = screen.getstr(self.cursor_pos.y,self.cursor_pos.x)
+            cs.noecho()
+            if isfile(path):
+                screen.clear()
+                self.lines = load_file(path)
+                self.print_all_lines(screen)
+                self.action_line = f"{path} is loaded!"
+                self.print_action_line(screen)
+                self.cursor_pos.x = 0
+                self.cursor_pos.y = 0
+            else:
+                self.action_line = f"{path} does not exist!"
+                self.print_action_line(screen)
+
         #moving
         def can_move(x,y):
             if x < 0 or y < 0:
