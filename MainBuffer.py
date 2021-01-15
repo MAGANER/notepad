@@ -1,14 +1,26 @@
 #MainBuffer contains field with text and action line.
 import curses as cs
+import keyboard as kb
+from msvcrt import kbhit
+from Keys import Keys
+
+class CursorPos():
+    def __init__(self):
+        self.x = 0
+        self.y = 0
 
 class MainBuffer():
     def __init__(self,lines):
         self.lines = lines
         self.action_line = 'welcome to tetibop!'
-        self.key_codes = {"escape":27}
+        
+        self.quiting = False
+
+        self.cursor_pos = CursorPos()
         
     def init_colors(self):
         cs.init_pair(1,cs.COLOR_RED,cs.COLOR_GREEN)
+        cs.init_pair(2,cs.COLOR_WHITE,cs.COLOR_CYAN)
         
     def print_action_line(self,screen):
         '''put the action line at very end of terminal'''
@@ -27,12 +39,69 @@ class MainBuffer():
             screen.addstr(y_pos,0,line)
             screen.refresh()
             y_pos+=1
-        
-    def process_key(self,key):
-        '''do command related to key code'''
-        if key == self.key_codes["escape"]:
-            exit(0)
+    def print_cursor(self,screen):
+        char = ''
+        if len(self.lines) > 0 and len(self.lines[self.cursor_pos.y]) > 0:
+            char = self.lines[self.cursor_pos.y][self.cursor_pos.x]
+        screen.addstr(self.cursor_pos.y,self.cursor_pos.x,char,cs.color_pair(2))
             
+    def process_key(self,screen):
+        '''do command related to key code'''
+
+        #quiting
+        if kb.is_pressed(Keys["quit"]):
+            self.action_line = "do you want to quit?(y/n)"
+            self.quiting = True
+        if kb.is_pressed("y") and self.quiting:
+            exit(0)
+        if kb.is_pressed("n") and self.quiting:
+            self.quiting = False
+            self.action_line = "done!"
+        ##
+
+        #moving
+        def can_move(x,y):
+            if x < 0 or y < 0:
+                return False
+            
+            along_y = y < len(self.lines)
+            if along_y and x < len(self.lines[y]):
+                return True
+            return False
+
+        if kb.is_pressed(Keys["movef"]):
+            new_x = self.cursor_pos.x + 1
+            if can_move(new_x,self.cursor_pos.y):
+                self.cursor_pos.x = new_x
+            else:
+                self.action_line = "can not move forward!"
+        if kb.is_pressed(Keys["moveb"]):
+            new_x = self.cursor_pos.x - 1
+            if can_move(new_x,self.cursor_pos.y):
+                self.cursor_pos.x = new_x
+            else:
+                self.action_line = "can not move back!"
+        if kb.is_pressed(Keys["movep"]):
+            new_y = self.cursor_pos.y - 1
+            if can_move(self.cursor_pos.x,new_y):
+                self.cursor_pos.y = new_y
+            else:
+                self.action_line = "can not move to previous line!"
+        if kb.is_pressed(Keys["moven"]):
+            new_y = self.cursor_pos.y + 1
+            _can_move = can_move(self.cursor_pos.x,new_y)
+            if _can_move:
+                self.cursor_pos.y = new_y
+            if not _can_move and new_y < len(self.lines):
+                line = self.lines[new_y]
+                if len(line) == 0:
+                    self.cursor_pos.x = 0
+                else:
+                    self.cursor_pos.x = len(line)-1
+                self.cursor_pos.y = new_y
+            else:
+                self.action_line = "can not move to next line!"
+        
     def _run(self,screen):
         '''function runs the whole programm, but it's used by curses wrapper'''
         screen.clear()
@@ -41,11 +110,12 @@ class MainBuffer():
         while True:
             self.print_action_line(screen)
             self.print_all_lines(screen)
-            key = screen.getch()
-            screen.addstr(0,0,f"{key}")
-            self.process_key(key)
+            self.print_cursor(screen)
 
-            screen.refresh()       
+            screen.getch()
+            self.process_key(screen)
+            
+            screen.refresh()
     def run(self):
         '''inits screen and do all curses staff and call function to run application'''
         cs.wrapper(self._run)
