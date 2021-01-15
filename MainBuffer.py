@@ -2,8 +2,8 @@
 import curses as cs
 
 class MainBuffer():
-    def __init__(self):
-        self.lines = []
+    def __init__(self,lines):
+        self.lines = lines
         self.action_line = 'welcome to tetibop!'
         self.key_codes = {"escape":27}
         
@@ -17,6 +17,17 @@ class MainBuffer():
         y_pos= height-1
         screen.addstr(y_pos,0,self.action_line,cs.color_pair(1))
         screen.refresh()
+    def print_all_lines(self,screen):
+        '''print file lines untill action line'''
+        height, width = screen.getmaxyx()
+        end_y = height-2
+        y_pos = 0
+        while y_pos < end_y and y_pos < len(self.lines):
+            line = self.lines[y_pos]
+            screen.addstr(y_pos,0,line)
+            screen.refresh()
+            y_pos+=1
+        
     def process_key(self,key):
         '''do command related to key code'''
         if key == self.key_codes["escape"]:
@@ -29,8 +40,9 @@ class MainBuffer():
         
         while True:
             self.print_action_line(screen)
-
+            self.print_all_lines(screen)
             key = screen.getch()
+            screen.addstr(0,0,f"{key}")
             self.process_key(key)
 
             screen.refresh()       
