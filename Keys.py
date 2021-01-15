@@ -9,5 +9,7 @@ Keys = {
     "moveb": "ctrl+b", #move back
     "moven": "ctrl+n", #move to the new line
     "movep": "ctrl+p", #move to the previous line
-    "open":  "ctrl+o"
+    "open":  "ctrl+o",
+    "scrollup": "alt+u",
+    "scrolld":  "alt+d" #scroll text down
        }
