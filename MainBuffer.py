@@ -128,11 +128,14 @@ class MainBuffer():
                 self.action_line = "can not move to next line!"
             self.move_down_pressed = True
 
-        if not kb.is_pressed(Keys["movef"]) and not kb.is_pressed(Keys["moveb"]) and not kb.is_pressed(Keys["movep"]) and not kb.is_pressed(Keys["moven"]):
-           self.move_forward_pressed = False
+        back_forward_not_pressed = not kb.is_pressed(Keys["movef"]) and not kb.is_pressed(Keys["moveb"])
+        up_down_not_pressed      = not kb.is_pressed(Keys["movep"]) and not kb.is_pressed(Keys["moven"])
+        not_pressed = back_forward_not_pressed and up_down_not_pressed
+        if not_pressed:
+           self.move_forward_pressed  = False
            self.move_backward_pressed = False
-           self.move_up_pressed = False
-           self.move_down_pressed = False
+           self.move_up_pressed       = False
+           self.move_down_pressed     = False
         
     def _run(self,screen):
         '''function runs the whole programm, but it's used by curses wrapper'''
