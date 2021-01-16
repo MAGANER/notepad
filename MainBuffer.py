@@ -54,8 +54,10 @@ class MainBuffer():
             line_number+=1
     def print_cursor(self,screen):
         char = ''
-        if len(self.lines) > 0 and len(self.lines[self.cursor_pos.y+self.cursor_pos.virtual_y]) > 0:
-            char = self.lines[self.cursor_pos.virtual_y+self.cursor_pos.y][self.cursor_pos.x]
+        if self.cursor_pos.y+self.cursor_pos.virtual_y < len(self.lines):
+            curr_line_len = len(self.lines[self.cursor_pos.y+self.cursor_pos.virtual_y])
+            if self.cursor_pos.x < curr_line_len:
+                char = self.lines[self.cursor_pos.virtual_y+self.cursor_pos.y][self.cursor_pos.x]
         screen.addstr(self.cursor_pos.y,self.cursor_pos.x,char,cs.color_pair(2))
                 
     def process_key(self,screen):
@@ -96,6 +98,27 @@ class MainBuffer():
                 self.action_line = f"{path} does not exist!"
                 self.print_action_line(screen)
 
+        #go to line
+        if kb.is_pressed(Keys["goto"]):
+            self.action_line ="enter line number: "
+            self.print_action_line(screen)
+            height, width = screen.getmaxyx()
+            y_pos = height - 1
+            x_pos = 18
+            cs.echo()
+            line = screen.getstr(y_pos,x_pos)
+            cs.noecho()
+            if line.isdigit():
+                if int(line) > len(self.lines):
+                    self.action_line = "line number is more then total lines' length!"
+                else:
+                    self.cursor_pos.x = 0
+                    self.cursor_pos.y = int(line)
+                    self.action_line  = f"moved to {line} line!"
+            else:
+                self.action_line = f"{line} is not number!"
+            
+        
         #moving
         def can_move(x,y):
             if x < 0 or y < 0:
@@ -108,16 +131,18 @@ class MainBuffer():
 
         if kb.is_pressed(Keys["movef"]) and not self.move_forward_pressed:
             new_x = self.cursor_pos.x + 1
-            if can_move(new_x,self.cursor_pos.y):
+            if can_move(new_x,self.cursor_pos.y+self.cursor_pos.virtual_y):
                 self.cursor_pos.x = new_x
+                self.action_line = "move forward"
             else:
                 self.action_line = "can not move forward!"            
             self.move_forward_pressed = True
             
         if kb.is_pressed(Keys["moveb"]) and not self.move_backward_pressed:
             new_x = self.cursor_pos.x - 1
-            if can_move(new_x,self.cursor_pos.y):
+            if can_move(new_x,self.cursor_pos.y+self.cursor_pos.virtual_y):
                 self.cursor_pos.x = new_x
+                self.action_line = "move backward"
             else:
                 self.action_line = "can not move back!"      
             self.move_backward_pressed = True
@@ -126,6 +151,7 @@ class MainBuffer():
             new_y = self.cursor_pos.y - 1
             if can_move(self.cursor_pos.x,new_y):
                 self.cursor_pos.y = new_y
+                self.action_line = "move to previous line"
             else:
                 self.action_line = "can not move to previous line!"            
             self.move_up_pressed = True
@@ -142,6 +168,7 @@ class MainBuffer():
                 else:
                     self.cursor_pos.x = len(line)-1
                 self.cursor_pos.y = new_y
+                self.action_line = "move to next line"
             else:
                 self.action_line = "can not move to next line!"         
             self.move_down_pressed = True
@@ -190,7 +217,7 @@ class MainBuffer():
         cs.curs_set(0)
         
         while True:
-            #screen.move(self.cursor_pos.y,self.cursor_pos.x)
+            screen.move(self.cursor_pos.y+self.cursor_pos.virtual_y,self.cursor_pos.x)
             self.print_action_line(screen)
             self.print_all_lines(screen)
             self.print_cursor(screen)
