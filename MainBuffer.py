@@ -54,7 +54,7 @@ class MainBuffer():
             line_number+=1
     def print_cursor(self,screen):
         char = ''
-        if len(self.lines) > 0 and len(self.lines[self.cursor_pos.y]) > 0:
+        if len(self.lines) > 0 and len(self.lines[self.cursor_pos.y+self.cursor_pos.virtual_y]) > 0:
             char = self.lines[self.cursor_pos.virtual_y+self.cursor_pos.y][self.cursor_pos.x]
         screen.addstr(self.cursor_pos.y,self.cursor_pos.x,char,cs.color_pair(2))
                 
@@ -145,7 +145,8 @@ class MainBuffer():
             else:
                 self.action_line = "can not move to next line!"         
             self.move_down_pressed = True
-        
+
+        #scrolling
         if kb.is_pressed(Keys["scrolld"]) and not self.scroll_down_pressed:
             if self.printing_begin_y_pos < len(self.lines):
                 self.printing_begin_y_pos += 1
@@ -157,7 +158,19 @@ class MainBuffer():
                 
 
             self.scroll_down_pressed = True
-        
+        if kb.is_pressed(Keys["scrollup"]) and not self.scroll_up_pressed:
+            if self.printing_begin_y_pos > 0:
+                self.printing_begin_y_pos -= 1
+                self.cursor_pos.virtual_y -= 1
+                screen.clear()
+            else:
+                self.action_line = "can not scroll up!"
+                self.print_action_line(screen)
+
+            self.scroll_up_pressed = True
+        #
+
+        #
         back_forward_not_pressed = not kb.is_pressed(Keys["movef"]) and not kb.is_pressed(Keys["moveb"])
         up_down_not_pressed      = not kb.is_pressed(Keys["movep"]) and not kb.is_pressed(Keys["moven"])
         scroll_not_pressed       = not kb.is_pressed(Keys["scrollup"]) and not kb.is_pressed(Keys["scrolld"])
