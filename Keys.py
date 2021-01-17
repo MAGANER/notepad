@@ -12,5 +12,6 @@ Keys = {
     "open":  "ctrl+o",
     "scrollup": "alt+u",
     "scrolld":  "alt+d", #scroll text down
-    "goto":  "ctrl+g" #go to specific line
+    "goto":  "ctrl+g", #go to specific line
+    "save": "ctrl+s"
        }

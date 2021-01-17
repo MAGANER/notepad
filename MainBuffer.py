@@ -29,6 +29,7 @@ class MainBuffer():
         self.scroll_down_pressed  = False
         self.scroll_up_pressed    = False
         
+        
     def init_colors(self):
         cs.init_pair(1,cs.COLOR_RED,cs.COLOR_GREEN)
         cs.init_pair(2,cs.COLOR_WHITE,cs.COLOR_CYAN)
@@ -59,7 +60,7 @@ class MainBuffer():
             if self.cursor_pos.x < curr_line_len:
                 char = self.lines[self.cursor_pos.virtual_y+self.cursor_pos.y][self.cursor_pos.x]
         screen.addstr(self.cursor_pos.y,self.cursor_pos.x,char,cs.color_pair(2))
-                
+    
     def process_key(self,screen):
         '''do command related to key code'''
 
@@ -81,10 +82,9 @@ class MainBuffer():
             self.action_line ="enter file path: "
             self.print_action_line(screen)
             
-            self.cursor_pos.x = 16
-            self.cursor_pos.y = y_pos
+            x_pos = 16
             cs.echo()
-            path = screen.getstr(self.cursor_pos.y,self.cursor_pos.x)
+            path = screen.getstr(y_pos,x_pos)
             cs.noecho()
             if isfile(path):
                 screen.clear()
@@ -98,6 +98,30 @@ class MainBuffer():
                 self.action_line = f"{path} does not exist!"
                 self.print_action_line(screen)
 
+
+        #save file
+        if kb.is_pressed(Keys["save"]):
+            self.action_line="enter path file:"
+            self.print_action_line(screen)
+            path = ""
+
+            height, width = screen.getmaxyx()
+            y_pos = height - 1
+            x_pos = 16
+
+            cs.echo()
+            path = screen.getstr(y_pos,x_pos)
+            self.save_path = path
+            cs.noecho()
+            
+            f = open(path,"w")
+            for l in self.lines:
+                f.write(l+'\n')
+            f.close()
+            
+            self.action_line = f"{path} is saved!"
+                
+        
         #go to line
         if kb.is_pressed(Keys["goto"]):
             self.action_line ="enter line number: "
