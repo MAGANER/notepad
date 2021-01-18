@@ -6,5 +6,6 @@
 import MainBuffer
 import FileLoader
 
-app = MainBuffer.MainBuffer(FileLoader.load_file_from_cl())
+data = FileLoader.load_file_from_cl()
+app = MainBuffer.MainBuffer(data[0],data[1])
 app.run()

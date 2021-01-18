@@ -13,7 +13,7 @@ class CursorPos():
         self.virtual_y = 0
 
 class MainBuffer():
-    def __init__(self,lines):
+    def __init__(self,lines,file_name):
         self.lines = lines
         self.action_line = 'welcome to tetibop!'
         
@@ -25,14 +25,17 @@ class MainBuffer():
         self.move_forward_pressed = False
         self.move_backward_pressed= False
         self.move_up_pressed      = False
-        self.move_donw_pressed    = False
         self.scroll_down_pressed  = False
         self.scroll_up_pressed    = False
-        
+        self.open_file_name = file_name
+        if len(self.open_file_name) == 0:
+            self.open_file_name = ":no file:"
+        self.changed = False
         
     def init_colors(self):
         cs.init_pair(1,cs.COLOR_RED,cs.COLOR_GREEN)
         cs.init_pair(2,cs.COLOR_WHITE,cs.COLOR_CYAN)
+        cs.init_pair(3,cs.COLOR_RED,cs.COLOR_WHITE)
         
     def print_action_line(self,screen):
         '''put the action line at very end of terminal'''
@@ -41,10 +44,23 @@ class MainBuffer():
         y_pos= height-1
         screen.addstr(y_pos,0,self.action_line,cs.color_pair(1))
         screen.refresh()
+    def print_state_line(self,screen):
+        '''print data about file name, current line and column'''
+        height, width = screen.getmaxyx()
+        y_pos = height - 2
+        save_status = ''
+        if self.changed:
+            save_status = ":changed:"
+        else:
+            save_status = ":saved:"
+        data = save_status+" "+self.open_file_name+" "+"line="+str(self.cursor_pos.x)+" column="+str(self.cursor_pos.y)+" total lines="+str(len(self.lines))
+        data+=' '*(width-len(data)-1)
+        screen.addstr(y_pos,0,data,cs.color_pair(3))
+        
     def print_all_lines(self,screen):
         '''print file lines untill action line'''
         height, width = screen.getmaxyx()
-        end_y = height-2
+        end_y = height-3
         line_number = self.printing_begin_y_pos
         y_pos = 0
         while y_pos < end_y and line_number < len(self.lines):
@@ -60,6 +76,17 @@ class MainBuffer():
             if self.cursor_pos.x < curr_line_len:
                 char = self.lines[self.cursor_pos.virtual_y+self.cursor_pos.y][self.cursor_pos.x]
         screen.addstr(self.cursor_pos.y,self.cursor_pos.x,char,cs.color_pair(2))
+
+    #string processing
+    def clear_str(self,string):
+        '''take substr between ' and ' '''
+        beg = string.find("'")
+        end = string.rfind("'")
+        return string[beg+1:end]
+    def get_file_name(self,string):
+        end = string.rfind("/")
+        return string[end+1:]
+    ##
     
     def process_key(self,screen):
         '''do command related to key code'''
@@ -94,6 +121,7 @@ class MainBuffer():
                 self.print_action_line(screen)
                 self.cursor_pos.x = 0
                 self.cursor_pos.y = 0
+                self.open_file_name = self.get_file_name(self.clear_str(str(path)))
             else:
                 self.action_line = f"{path} does not exist!"
                 self.print_action_line(screen)
@@ -244,8 +272,9 @@ class MainBuffer():
             screen.move(self.cursor_pos.y+self.cursor_pos.virtual_y,self.cursor_pos.x)
             self.print_action_line(screen)
             self.print_all_lines(screen)
+            self.print_state_line(screen)
             self.print_cursor(screen)
-
+    
             self.process_key(screen)
             
             screen.refresh()
