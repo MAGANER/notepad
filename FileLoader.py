@@ -11,4 +11,4 @@ def load_file_from_cl():
     if len(sys.argv) < 2:
         return []
     path = sys.argv[1]
-    return load_file(path)
+    return (load_file(path),path)
