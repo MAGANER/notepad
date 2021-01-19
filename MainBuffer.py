@@ -27,9 +27,12 @@ class MainBuffer():
         self.move_up_pressed      = False
         self.scroll_down_pressed  = False
         self.scroll_up_pressed    = False
+        
         self.open_file_name = file_name
+        self.open_file_path = file_name
         if len(self.open_file_name) == 0:
             self.open_file_name = ":no file:"
+            
         self.changed = False
         
     def init_colors(self):
@@ -86,6 +89,12 @@ class MainBuffer():
     def get_file_name(self,string):
         end = string.rfind("/")
         return string[end+1:]
+    def save_file(self,path):
+        with open(path,"w") as f:
+            f.seek(0)
+            f.truncate()
+            for l in self.lines:
+                f.write(l+"\n")
     ##
     
     def process_key(self,screen):
@@ -102,6 +111,27 @@ class MainBuffer():
             self.action_line = "done!"
         ##
 
+        #create new file
+        if kb.is_pressed(Keys["createn"]):
+            height, width = screen.getmaxyx()
+            y_pos = height - 1
+            self.action_line ="enter new file name:"
+            self.print_action_line(screen)
+
+            x_pos = 21
+            cs.echo()
+            name = screen.getstr(y_pos,x_pos)
+            name = self.clear_str(str(name))
+            cs.noecho()
+            self.lines.clear()
+            screen.clear()
+            self.cursor_pos.x = 0
+            self.cursor_pos.y = 0
+            self.open_file_name = name
+            self.action_line = f"{name} file is created!"
+        ##
+            
+        
         #loading
         if kb.is_pressed(Keys["open"]):
             height, width = screen.getmaxyx()
@@ -121,6 +151,7 @@ class MainBuffer():
                 self.print_action_line(screen)
                 self.cursor_pos.x = 0
                 self.cursor_pos.y = 0
+                self.open_file_path = (str(path).replace("'",'')).replace("b",'')
                 self.open_file_name = self.get_file_name(self.clear_str(str(path)))
             else:
                 self.action_line = f"{path} does not exist!"
@@ -142,13 +173,12 @@ class MainBuffer():
             self.save_path = path
             cs.noecho()
             
-            f = open(path,"w")
-            for l in self.lines:
-                f.write(l+'\n')
-            f.close()
+            self.save_file(path)
             
             self.action_line = f"{path} is saved!"
-                
+        if kb.is_pressed(Keys["savef"]):
+            self.save_file(self.open_file_path)
+            self.action_line = f"{self.open_file_path} is saved!"
         
         #go to line
         if kb.is_pressed(Keys["goto"]):
