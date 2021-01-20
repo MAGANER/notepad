@@ -11,6 +11,7 @@ class CursorPos():
         self.x = 0
         self.y = 0
         self.virtual_y = 0
+        self.virtual_x = 0
 
 class MainBuffer():
     def __init__(self,lines,file_name):
@@ -21,12 +22,15 @@ class MainBuffer():
 
         self.cursor_pos = CursorPos()
         self.printing_begin_y_pos = 0
+        self.printing_begin_x_pos = 0
         
         self.move_forward_pressed = False
         self.move_backward_pressed= False
         self.move_up_pressed      = False
         self.scroll_down_pressed  = False
         self.scroll_up_pressed    = False
+        self.scroll_forward_pressed = False
+        self.scroll_backward_pressed= False
         
         self.open_file_name = file_name
         self.open_file_path = file_name
@@ -67,7 +71,7 @@ class MainBuffer():
         line_number = self.printing_begin_y_pos
         y_pos = 0
         while y_pos < end_y and line_number < len(self.lines):
-            line = self.lines[line_number]
+            line = self.lines[line_number][self.printing_begin_x_pos:]
             screen.addstr(y_pos,0,line)
             screen.refresh()
             y_pos+=1
@@ -76,8 +80,8 @@ class MainBuffer():
         char = ''
         if self.cursor_pos.y+self.cursor_pos.virtual_y < len(self.lines):
             curr_line_len = len(self.lines[self.cursor_pos.y+self.cursor_pos.virtual_y])
-            if self.cursor_pos.x < curr_line_len:
-                char = self.lines[self.cursor_pos.virtual_y+self.cursor_pos.y][self.cursor_pos.x]
+            if self.cursor_pos.x+self.cursor_pos.virtual_x < curr_line_len:
+                char = self.lines[self.cursor_pos.virtual_y+self.cursor_pos.y][self.cursor_pos.x+self.cursor_pos.virtual_x]
         screen.addstr(self.cursor_pos.y,self.cursor_pos.x,char,cs.color_pair(2))
 
     #string processing
@@ -277,13 +281,33 @@ class MainBuffer():
                 self.print_action_line(screen)
 
             self.scroll_up_pressed = True
+        if kb.is_pressed(Keys["scrollf"]) and not self.scroll_forward_pressed:
+            max_elem_len = len(max(self.lines))
+            if self.printing_begin_x_pos < max_elem_len:
+                self.printing_begin_x_pos += 1
+                self.cursor_pos.virtual_x += 1
+                screen.clear()
+                self.action_line = "scroll forward"
+            else:
+                self.action_line = "can not scroll forward!"
+                self.print_action_line(screen)
+        if kb.is_pressed(Keys["scrollb"]) and not self.scroll_backward_pressed:
+            if self.printing_begin_x_pos > 0:
+                self.printing_begin_x_pos -= 1
+                self.cursor_pos.virtual_x -= 1
+                screen.clear()
+                self.action_line = "scroll backward"
+            else:
+                self.action_line = "can not scroll backward!"
+                self.print_action_line(screen)
         #
 
         #
         back_forward_not_pressed = not kb.is_pressed(Keys["movef"]) and not kb.is_pressed(Keys["moveb"])
         up_down_not_pressed      = not kb.is_pressed(Keys["movep"]) and not kb.is_pressed(Keys["moven"])
         scroll_not_pressed       = not kb.is_pressed(Keys["scrollup"]) and not kb.is_pressed(Keys["scrolld"])
-        not_pressed = back_forward_not_pressed and up_down_not_pressed and scroll_not_pressed
+        scroll_along_x_not_pressed = not kb.is_pressed(Keys["scrollf"]) and not kb.is_pressed(Keys["scrollb"])
+        not_pressed = back_forward_not_pressed and up_down_not_pressed and scroll_not_pressed and scroll_along_x_not_pressed
         if not_pressed:
            self.move_forward_pressed  = False
            self.move_backward_pressed = False
@@ -291,6 +315,8 @@ class MainBuffer():
            self.move_down_pressed     = False
            self.scroll_down_pressed   = False
            self.scroll_up_pressed     = False
+           self.scroll_forward_pressed= False
+           self.scroll_backward_pressed= False
         
     def _run(self,screen):
         '''function runs the whole programm, but it's used by curses wrapper'''

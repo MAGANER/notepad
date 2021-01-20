@@ -15,5 +15,7 @@ Keys = {
     "goto":  "ctrl+g", #go to specific line
     "save":  "ctrl+s", #save as new file
     "savef": "alt+s", #save to the same place
-    "createn": "alt+n"
+    "createn": "alt+n",
+    "scrollf": "alt+f",#scroll forward text
+    "scrollb": "alt+b" #scroll back text
        }
