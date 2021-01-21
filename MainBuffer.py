@@ -99,11 +99,55 @@ class MainBuffer():
             f.truncate()
             for l in self.lines:
                 f.write(l+"\n")
+    def find_all(self, word, screen):
+        '''returns the tuple list of position where first is line number'''
+        result = []
+        
+        def find_all_in_line(word,line,begin):
+            x_poses = []
+            pos = line.find(word,begin)
+            while True:
+                if pos == -1:
+                    break
+                else:
+                    x_poses.append(pos)
+                    pos = line.find(word,pos+1)
+            return x_poses
+
+        y_counter = 0
+        for l in self.lines:
+            x_poses = find_all_in_line(word,l,0)
+            if x_poses != None and len(x_poses) > 0:
+                sub_results = []
+                for x in x_poses:
+                    sub_results.append((y_counter,x))
+                for res in sub_results:
+                    result.append(res)
+            y_counter += 1
+        self.action_line = "total found number is "+str(len(result))
+        self.print_action_line(screen)
+            
     ##
     
     def process_key(self,screen):
         '''do command related to key code'''
 
+        #searching
+        if kb.is_pressed(Keys["search"]):
+            height, width = screen.getmaxyx()
+            self.action_line = "enter word to find:"
+            self.print_action_line(screen)
+
+            y_pos = height -1
+            x_pos = 20
+            cs.echo()
+            word = self.clear_str(str(screen.getstr(y_pos,x_pos)))
+            cs.noecho()
+            self.find_all(word,screen)
+
+            
+        #
+        
         #quiting
         if kb.is_pressed(Keys["quit"]):
             self.action_line = "do you want to quit?(y/n)"
