@@ -18,5 +18,5 @@ Keys = {
     "createn": "alt+n",
     "scrollf": "alt+f",#scroll forward text
     "scrollb": "alt+b", #scroll back text
-    "search": "shift+f" #search all
+    "search": "shift+f", #search all
        }
