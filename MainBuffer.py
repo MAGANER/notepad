@@ -31,6 +31,8 @@ class MainBuffer():
         self.scroll_up_pressed    = False
         self.scroll_forward_pressed = False
         self.scroll_backward_pressed= False
+        self.show_next_found_word_pressed = False
+        self.show_prev_found_word_pressed = False
         
         self.open_file_name = file_name
         self.open_file_path = file_name
@@ -99,6 +101,8 @@ class MainBuffer():
             f.truncate()
             for l in self.lines:
                 f.write(l+"\n")
+
+    #finding staff
     def find_all(self, word, screen):
         '''returns the tuple list of position where first is line number'''
         result = []
@@ -124,9 +128,14 @@ class MainBuffer():
                 for res in sub_results:
                     result.append(res)
             y_counter += 1
+
+        additional_data = "lines: "
+        for l in result:
+            additional_data += str(l)+" "
         self.action_line = "total found number is "+str(len(result))
+        if len(result):
+            self.action_line += " "+additional_data
         self.print_action_line(screen)
-            
     ##
     
     def process_key(self,screen):
@@ -143,9 +152,7 @@ class MainBuffer():
             cs.echo()
             word = self.clear_str(str(screen.getstr(y_pos,x_pos)))
             cs.noecho()
-            self.find_all(word,screen)
-
-            
+            self.find_all(word,screen) 
         #
         
         #quiting
@@ -345,13 +352,14 @@ class MainBuffer():
                 self.action_line = "can not scroll backward!"
                 self.print_action_line(screen)
         #
-
+        
         #
         back_forward_not_pressed = not kb.is_pressed(Keys["movef"]) and not kb.is_pressed(Keys["moveb"])
         up_down_not_pressed      = not kb.is_pressed(Keys["movep"]) and not kb.is_pressed(Keys["moven"])
         scroll_not_pressed       = not kb.is_pressed(Keys["scrollup"]) and not kb.is_pressed(Keys["scrolld"])
         scroll_along_x_not_pressed = not kb.is_pressed(Keys["scrollf"]) and not kb.is_pressed(Keys["scrollb"])
-        not_pressed = back_forward_not_pressed and up_down_not_pressed and scroll_not_pressed and scroll_along_x_not_pressed
+        next_prev_pressed  = not kb.is_pressed(Keys["left"]) and not kb.is_pressed(Keys["right"])
+        not_pressed = back_forward_not_pressed and up_down_not_pressed and scroll_not_pressed and scroll_along_x_not_pressed and next_prev_pressed
         if not_pressed:
            self.move_forward_pressed  = False
            self.move_backward_pressed = False
@@ -361,6 +369,8 @@ class MainBuffer():
            self.scroll_up_pressed     = False
            self.scroll_forward_pressed= False
            self.scroll_backward_pressed= False
+           self.show_next_found_word_pressed = False
+           self.show_prev_found_word_pressed = False
         
     def _run(self,screen):
         '''function runs the whole programm, but it's used by curses wrapper'''
