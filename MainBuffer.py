@@ -23,6 +23,7 @@ class MainBuffer():
         
         self.action_history.append(self.action_line)
 
+        self.see_commands = False
         
         self.quiting = False
 
@@ -41,6 +42,7 @@ class MainBuffer():
         self.show_next_found_word_pressed = False
         self.show_prev_found_word_pressed = False
         self.see_history_pressed = False
+        self.see_commands_pressed= False
         
         self.open_file_name = file_name
         self.open_file_path = file_name
@@ -262,7 +264,16 @@ class MainBuffer():
             self.save_file(self.open_file_path)
             self.action_line = f"{self.open_file_path} is saved!"
             self.action_history.append(self.action_line)
-        
+
+        if kb.is_pressed(Keys["seecommands"]) and not self.see_commands_pressed:
+            if self.see_commands:
+                self.see_commands = False
+            else:
+                self.see_commands = True
+            screen.clear()
+            self.cursor_pos = CursorPos()
+            self.see_commands_pressed = True
+            
         #go to line
         if kb.is_pressed(Keys["goto"]):
             self.action_line ="enter line number: "
@@ -404,7 +415,8 @@ class MainBuffer():
         scroll_not_pressed       = not kb.is_pressed(Keys["scrollup"]) and not kb.is_pressed(Keys["scrolld"])
         scroll_along_x_not_pressed = not kb.is_pressed(Keys["scrollf"]) and not kb.is_pressed(Keys["scrollb"])
         see_hist_not_pressed = not kb.is_pressed(Keys["seehistory"])
-        not_pressed = back_forward_not_pressed and up_down_not_pressed and scroll_not_pressed and scroll_along_x_not_pressed and see_hist_not_pressed
+        see_commands = not kb.is_pressed(Keys["seecommands"])
+        not_pressed = back_forward_not_pressed and up_down_not_pressed and scroll_not_pressed and scroll_along_x_not_pressed and see_hist_not_pressed and see_commands
         if not_pressed:
            self.move_forward_pressed  = False
            self.move_backward_pressed = False
@@ -417,6 +429,7 @@ class MainBuffer():
            self.show_next_found_word_pressed = False
            self.show_prev_found_word_pressed = False
            self.see_history_pressed = False
+           self.see_commands_pressed= False
         
     def _run(self,screen):
         '''function runs the whole programm, but it's used by curses wrapper'''
@@ -427,12 +440,22 @@ class MainBuffer():
         while True:
             screen.move(self.cursor_pos.y+self.cursor_pos.virtual_y,self.cursor_pos.x)
             self.print_action_line(screen)
-            if self.see_action_history:
-                self.print_all_lines(screen,self.action_history)
-                self.print_cursor(screen,self.action_history)
+
+            if not self.see_commands:
+                if self.see_action_history:
+                    self.print_all_lines(screen,self.action_history)
+                    self.print_cursor(screen,self.action_history)
+                else:
+                    self.print_all_lines(screen,self.lines)
+                    self.print_cursor(screen,self.lines)
             else:
-                self.print_all_lines(screen,self.lines)
-                self.print_cursor(screen,self.lines)
+                data = []
+                for key in Keys:
+                    string = f"{key} -> {Keys[key]}"
+                    data.append(string)
+                self.print_all_lines(screen,data)
+                self.print_cursor(screen,data)
+                
             self.print_state_line(screen)
     
             self.process_key(screen)
