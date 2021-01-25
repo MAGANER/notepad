@@ -5,6 +5,7 @@ from msvcrt import kbhit
 from Keys import Keys
 from FileLoader import load_file
 from os.path import isfile
+from functools import reduce
 
 class CursorPos():
     def __init__(self):
@@ -139,12 +140,32 @@ class MainBuffer():
                     result.append(res)
             y_counter += 1
 
-        additional_data = "lines: "
+        width, height = screen.getmaxyx()
+        additional_data = ["lines: "]
+        add_data_string = ""
+        elem_counter = 0
+        max_elem = -1
         for l in result:
-            additional_data += str(l)+" "
+            additional_data.append(str(l)+" ")
+            length = len(reduce(lambda x,y: x+ y,additional_data))
+            if length > width:
+                max_elem = elem_counter - 1
+            elem_counter += 1
+        if max_elem != -1:
+            visible_elems = additional_data[:max_elem+1]
+            add_data_string = reduce(lambda x,y: x + y,visible_elems)
+            self.action_history.append(add_data_string)
+
+            not_visible_elems = additional_data[max_elem+2:]
+            data = reduce(lambda x,y : x + y, not_visible_elems)
+            self.action_history.append(data)
+        else:
+            add_data_string = reduce(lambda x,y: x + y,additional_data)
+            self.action_history.append(add_data_string)
+            
         self.action_line = "total found number is "+str(len(result))
         if len(result):
-            self.action_line += " "+additional_data
+            self.action_line += " "+add_data_string
         self.print_action_line(screen)
     ##
     
@@ -173,7 +194,6 @@ class MainBuffer():
             word = self.clear_str(str(screen.getstr(y_pos,x_pos)))
             cs.noecho()
             self.find_all(word,screen)
-            self.action_history.append(self.action_line)
         #
         
         #quiting
