@@ -19,6 +19,7 @@ Keys = {
     "scrollf" :  "alt+f",   #scroll forward text
     "scrollb" :  "alt+b",   #scroll back text
     "search"  :  "shift+f", #search all
-    "seehistory":"alt+h",   #see action history
+    "seehistory" :"alt+h",   #see action history
     "seecommands":"alt+c",
+    "replace"    :"ctrl+r",
        }
