@@ -172,6 +172,7 @@ class MainBuffer():
     def process_key(self,screen):
         '''do command related to key code'''
 
+        #see history
         if kb.is_pressed(Keys["seehistory"]) and not self.see_history_pressed:
             if self.see_action_history:
                 self.see_action_history = False
@@ -194,7 +195,34 @@ class MainBuffer():
             word = self.clear_str(str(screen.getstr(y_pos,x_pos)))
             cs.noecho()
             self.find_all(word,screen)
-        #
+
+
+        #replacing
+        if kb.is_pressed(Keys["replace"]):
+            height, width = screen.getmaxyx()
+            y_pos = height - 1
+            x_pos = 27
+            
+            self.action_line = "enter old word to replace:"
+            self.print_action_line(screen)
+
+            cs.echo()
+            old = self.clear_str(str(screen.getstr(y_pos,x_pos)))
+            cs.noecho()
+
+            self.action_line = "enter new word to replace:"
+            self.print_action_line(screen)
+
+            cs.echo()
+            new = self.clear_str(str(screen.getstr(y_pos,x_pos)))
+            cs.noecho()
+
+            counter = 0
+            for l in self.lines:
+                self.lines[counter] = l.replace(old,new)
+                counter += 1
+            self.action_line = "all "+old+" changed to "+new
+            self.action_history.append(self.action_line)
         
         #quiting
         if kb.is_pressed(Keys["quit"]):
@@ -247,7 +275,7 @@ class MainBuffer():
             if isfile(path):
                 screen.clear()
                 self.lines = load_file(path)
-                self.print_all_lines(screen)
+                self.print_all_lines(screen,self.lines)
                 self.action_line = f"{path} is loaded!"
                 self.print_action_line(screen)
                 self.cursor_pos.x = 0
