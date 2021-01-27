@@ -19,6 +19,7 @@ class MainBuffer():
         self.lines = lines
         self.action_history = []
         self.see_action_history = False
+        self.alphabet = self.generate_alphabet()
         
         self.action_line = 'welcome to tetibop!'
         
@@ -44,6 +45,10 @@ class MainBuffer():
         self.show_prev_found_word_pressed = False
         self.see_history_pressed = False
         self.see_commands_pressed= False
+        self.space_pressed = False
+
+        self.last_key = ''
+        self.last_key_pressed = False
         
         self.open_file_name = file_name
         self.open_file_path = file_name
@@ -73,7 +78,7 @@ class MainBuffer():
             save_status = ":changed:"
         else:
             save_status = ":saved:"
-        data = save_status+" "+self.open_file_name+" "+"line="+str(self.cursor_pos.x)+" column="+str(self.cursor_pos.y)+" total lines="+str(len(self.lines))
+        data = save_status+" "+self.open_file_name+" "+"line="+str(self.cursor_pos.y)+" column="+str(self.cursor_pos.x)+" total lines="+str(len(self.lines))
         data+=' '*(width-len(data)-1)
         screen.addstr(y_pos,0,data,cs.color_pair(3))
         
@@ -112,6 +117,30 @@ class MainBuffer():
             f.truncate()
             for l in self.lines:
                 f.write(l+"\n")
+    #moving
+    def can_move(self,x,y):
+        if x < 0 or y < 0:
+            return False
+            
+        along_y = y < len(self.lines)
+        if along_y and x < len(self.lines[y]):
+            return True
+        return False
+
+    def generate_alphabet(self):
+        upper = lambda x: x.upper()
+        en = [chr(x) for x in range(ord('a'), ord('z') + 1)]
+        en_up = map(upper,en)
+        
+        rus= [chr(x) for x in range(ord('а'), ord('я') + 1)]
+        rus_up = map(upper,rus)
+        
+        numbers = [x for x in range(1,10)]
+        numbers.append(0)
+        specials = "!@#$;%^:?&*()-+=}{[];'|\/" + '"'
+
+        summ_str = lambda x,y:str(x)+str(y)
+        return reduce(summ_str,en) + reduce(summ_str,rus) + reduce(summ_str,numbers)+ reduce(summ_str,en_up) + reduce(summ_str,rus_up) + specials
 
     #finding
     def find_all(self, word, screen):
@@ -171,7 +200,24 @@ class MainBuffer():
     
     def process_key(self,screen):
         '''do command related to key code'''
+        if kb.is_pressed("space") and not self.last_key_pressed:
+            self.last_key = "space"
+            lines_len = len(self.lines)
+            current_line_len = -1
+            if self.cursor_pos.y < lines_len:
+                current_line_len = len(self.lines[self.cursor_pos.y][self.cursor_pos.x])
+                
+            if lines_len == 0:
+                self.lines.append(' ')
+                self.lines[self.cursor_pos.y]+= ' '
+            elif lines_len > 0:
+               line = list(self.lines[self.cursor_pos.y])
+               line.insert(self.cursor_pos.x,' ')
+               self.lines[self.cursor_pos.y] = reduce(lambda x,y:x+y, line)
+               self.cursor_pos.x+= 1
 
+            self.last_key_pressed = True
+            
         #see history
         if kb.is_pressed(Keys["seehistory"]) and not self.see_history_pressed:
             if self.see_action_history:
@@ -346,19 +392,9 @@ class MainBuffer():
             self.action_history.append(self.action_line)
             
         
-        #moving
-        def can_move(x,y):
-            if x < 0 or y < 0:
-                return False
-            
-            along_y = y < len(self.lines)
-            if along_y and x < len(self.lines[y]):
-                return True
-            return False
-
         if kb.is_pressed(Keys["movef"]) and not self.move_forward_pressed:
             new_x = self.cursor_pos.x + 1
-            if can_move(new_x,self.cursor_pos.y+self.cursor_pos.virtual_y):
+            if self.can_move(new_x,self.cursor_pos.y+self.cursor_pos.virtual_y):
                 self.cursor_pos.x = new_x
                 self.action_line = "move forward"
             else:
@@ -368,7 +404,7 @@ class MainBuffer():
             
         if kb.is_pressed(Keys["moveb"]) and not self.move_backward_pressed:
             new_x = self.cursor_pos.x - 1
-            if can_move(new_x,self.cursor_pos.y+self.cursor_pos.virtual_y):
+            if self.can_move(new_x,self.cursor_pos.y+self.cursor_pos.virtual_y):
                 self.cursor_pos.x = new_x
                 self.action_line = "move backward"
             else:
@@ -378,7 +414,7 @@ class MainBuffer():
             
         if kb.is_pressed(Keys["movep"]) and not self.move_up_pressed:
             new_y = self.cursor_pos.y - 1
-            if can_move(self.cursor_pos.x,new_y):
+            if self.can_move(self.cursor_pos.x,new_y):
                 self.cursor_pos.y = new_y
                 self.action_line = "move to previous line"
             else:
@@ -388,7 +424,7 @@ class MainBuffer():
             
         if kb.is_pressed(Keys["moven"]) and not self.move_down_pressed:
             new_y = self.cursor_pos.y + 1
-            _can_move = can_move(self.cursor_pos.x,new_y)
+            _can_move = self.can_move(self.cursor_pos.x,new_y)
             if _can_move:
                 self.cursor_pos.y = new_y
             if not _can_move and new_y < len(self.lines):
@@ -464,8 +500,10 @@ class MainBuffer():
         scroll_along_x_not_pressed = not kb.is_pressed(Keys["scrollf"]) and not kb.is_pressed(Keys["scrollb"])
         see_hist_not_pressed = not kb.is_pressed(Keys["seehistory"])
         see_commands = not kb.is_pressed(Keys["seecommands"])
+        last_key_pressed = self.last_key != '' and not kb.is_pressed(self.last_key)
+        space_pressed = not kb.is_pressed("space")
         not_pressed = back_forward_not_pressed and up_down_not_pressed and scroll_not_pressed and scroll_along_x_not_pressed and see_hist_not_pressed and see_commands
-        if not_pressed:
+        if not_pressed and last_key_pressed and space_pressed:
            self.move_forward_pressed  = False
            self.move_backward_pressed = False
            self.move_up_pressed       = False
@@ -478,6 +516,8 @@ class MainBuffer():
            self.show_prev_found_word_pressed = False
            self.see_history_pressed = False
            self.see_commands_pressed= False
+           self.last_key_pressed = False
+           self.space_pressed = False
         
     def _run(self,screen):
         '''function runs the whole programm, but it's used by curses wrapper'''
