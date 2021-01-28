@@ -117,6 +117,20 @@ class MainBuffer():
             f.truncate()
             for l in self.lines:
                 f.write(l+"\n")
+    def add_space(self,number):
+        lines_len = len(self.lines)
+        current_line_len = -1
+        if self.cursor_pos.y < lines_len:
+            current_line_len = len(self.lines[self.cursor_pos.y][self.cursor_pos.x])
+                
+        if lines_len == 0:
+            self.lines.append(' '*number)
+            self.lines[self.cursor_pos.y]+= ' '*number
+        elif lines_len > 0:
+            line = list(self.lines[self.cursor_pos.y])
+            line.insert(self.cursor_pos.x,' '*number)
+            self.lines[self.cursor_pos.y] = reduce(lambda x,y:x+y, line)
+            self.cursor_pos.x+= number
     #moving
     def can_move(self,x,y):
         if x < 0 or y < 0:
@@ -202,21 +216,9 @@ class MainBuffer():
         '''do command related to key code'''
         if kb.is_pressed("space") and not self.last_key_pressed:
             self.last_key = "space"
-            lines_len = len(self.lines)
-            current_line_len = -1
-            if self.cursor_pos.y < lines_len:
-                current_line_len = len(self.lines[self.cursor_pos.y][self.cursor_pos.x])
-                
-            if lines_len == 0:
-                self.lines.append(' ')
-                self.lines[self.cursor_pos.y]+= ' '
-            elif lines_len > 0:
-               line = list(self.lines[self.cursor_pos.y])
-               line.insert(self.cursor_pos.x,' ')
-               self.lines[self.cursor_pos.y] = reduce(lambda x,y:x+y, line)
-               self.cursor_pos.x+= 1
-
+            self.add_space(1)
             self.last_key_pressed = True
+            self.changed = True
             
         #see history
         if kb.is_pressed(Keys["seehistory"]) and not self.see_history_pressed:
@@ -354,10 +356,13 @@ class MainBuffer():
             
             self.action_line = f"{path} is saved!"
             self.action_history.append(self.action_line)
+            self.changed = False
+            
         if kb.is_pressed(Keys["savef"]):
             self.save_file(self.open_file_path)
             self.action_line = f"{self.open_file_path} is saved!"
             self.action_history.append(self.action_line)
+            self.changed = False
 
         if kb.is_pressed(Keys["seecommands"]) and not self.see_commands_pressed:
             if self.see_commands:
