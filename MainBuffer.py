@@ -132,16 +132,13 @@ class MainBuffer():
         upper = lambda x: x.upper()
         en = [chr(x) for x in range(ord('a'), ord('z') + 1)]
         en_up = map(upper,en)
-        
-        rus= [chr(x) for x in range(ord('а'), ord('я') + 1)]
-        rus_up = map(upper,rus)
-        
+           
         numbers = [x for x in range(1,10)]
         numbers.append(0)
         specials = "!@#$;%^:?&*()-+=}{[];'|\/" + '"'
 
         summ_str = lambda x,y:str(x)+str(y)
-        return reduce(summ_str,en) + reduce(summ_str,rus) + reduce(summ_str,numbers)+ reduce(summ_str,en_up) + reduce(summ_str,rus_up) + specials
+        return reduce(summ_str,en) + reduce(summ_str,numbers)+ reduce(summ_str,en_up) + specials
 
     #finding
     def find_all(self, word, screen):
@@ -200,7 +197,7 @@ class MainBuffer():
     ##
     
     def process_key(self,screen):
-        '''do command related to key code'''
+        '''do command related to key code'''        
         if kb.is_pressed("space") and not self.last_key_pressed:
             self.last_key = "space"
             self.add_space(1)
@@ -233,8 +230,7 @@ class MainBuffer():
                     self.last_key_pressed = True
                     self.changed = True
             else:
-                self.last_key = ''
-                    
+                self.last_key = ''  
 
         #removing
         if kb.is_pressed(Keys["removea"]) and not self.last_hot_key_pressed:
@@ -552,6 +548,15 @@ class MainBuffer():
             self.action_history.append(self.action_line)
             self.last_hot_key_pressed = True
         #
+        for key in self.alphabet:
+            if kb.is_pressed(key) and not self.last_key_pressed and not self.last_hot_key_pressed:
+                self.last_key = key
+                curr_line = list(self.lines[self.cursor_pos.y])
+                curr_line.insert(self.cursor_pos.x,key)
+                self.lines[self.cursor_pos.y] = reduce(lambda x,y:x+y,curr_line)
+                self.last_key_pressed = True
+                self.changed = True
+                self.cursor_pos.x+=1
         
         #
 
