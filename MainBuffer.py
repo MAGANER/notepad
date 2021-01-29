@@ -118,9 +118,6 @@ class MainBuffer():
                 f.write(l+"\n")
     def add_space(self,number):
         lines_len = len(self.lines)
-        current_line_len = -1
-        if self.cursor_pos.y < lines_len:
-            current_line_len = len(self.lines[self.cursor_pos.y][self.cursor_pos.x])
                 
         if lines_len == 0:
             self.lines.append(' '*number)
@@ -221,6 +218,28 @@ class MainBuffer():
         if kb.is_pressed("tab") and not self.last_key_pressed:
             self.last_key = "tab"
             self.add_space(4)
+            self.last_key_pressed = True
+            self.changed = True
+        if kb.is_pressed("enter") and not self.last_key_pressed:
+            self.last_key = "enter"
+            lines_len = len(self.lines)
+            if lines_len == 0:
+                self.lines.append(' ')
+
+            if lines_len > 0:
+                curr_line_len = len(self.lines[self.cursor_pos.y])
+                if self.cursor_pos.x < curr_line_len:
+                    curr_line = self.lines[self.cursor_pos.y]
+                    old_line = curr_line[0:self.cursor_pos.x]
+                    if len(old_line) == 0:
+                        old_line = ' '
+                    new_line = curr_line[self.cursor_pos.x:]
+                    self.lines[self.cursor_pos.y] = old_line
+                    self.lines.insert(self.cursor_pos.y+1,new_line)
+                    screen.clear()
+                    self.cursor_pos.y+=1
+                    self.cursor_pos.x=0
+            
             self.last_key_pressed = True
             self.changed = True
         
@@ -512,7 +531,7 @@ class MainBuffer():
         last_key_pressed = self.last_key != '' and not kb.is_pressed(self.last_key)
         space_pressed = not kb.is_pressed("space")
         not_pressed = back_forward_not_pressed and up_down_not_pressed and scroll_not_pressed and scroll_along_x_not_pressed and see_hist_not_pressed and see_commands
-        if not_pressed and last_key_pressed:
+        if not_pressed:
            self.move_forward_pressed  = False
            self.move_backward_pressed = False
            self.move_up_pressed       = False
@@ -525,6 +544,7 @@ class MainBuffer():
            self.show_prev_found_word_pressed = False
            self.see_history_pressed = False
            self.see_commands_pressed= False
+        if last_key_pressed:
            self.last_key_pressed = False
         
     def _run(self,screen):
