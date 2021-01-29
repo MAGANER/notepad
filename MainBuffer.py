@@ -230,29 +230,40 @@ class MainBuffer():
                     self.cursor_pos.y+=1
                     self.cursor_pos.x=0
             
-            self.last_key_pressed = True
-            self.changed = True
+                    self.last_key_pressed = True
+                    self.changed = True
+            else:
+                self.last_key = ''
+                    
 
         #removing
         if kb.is_pressed(Keys["removea"]) and not self.last_hot_key_pressed:
-            last_hot_key = Keys["removea"]
-            curr_line = self.lines[self.cursor_pos.y]
-            left = curr_line[0:self.cursor_pos.x]
-            right= curr_line[self.cursor_pos.x+1:]
-            self.lines[self.cursor_pos.y] = left+right
-            screen.clear()
-            self.last_hot_key_pressed = True
-            self.changed = True
+            self.last_hot_key = Keys["removea"]
+            if len(self.lines) > 0:
+                curr_line = self.lines[self.cursor_pos.y]
+                if len(curr_line) > 0:
+                    left = curr_line[0:self.cursor_pos.x]
+                    right= curr_line[self.cursor_pos.x+1:]
+                    self.lines[self.cursor_pos.y] = left+right
+                    screen.clear()
+                    self.last_hot_key_pressed = True
+                    self.changed = True
+            else:
+                self.last_hot_key = ''
+                    
         if kb.is_pressed("backspace") and not self.last_key_pressed:
             self.last_key = "backspace"
-            if self.cursor_pos.x -1 > -1:
+            if self.cursor_pos.x -1 > -1 and len(self.lines) > 0:
                 curr_line = self.lines[self.cursor_pos.y]
-                left = curr_line[0:self.cursor_pos.x-1]
-                right= curr_line[self.cursor_pos.x:]
-                self.lines[self.cursor_pos.y] = left+right
-                self.last_key_pressed = True
-                self.changed = True
-                self.cursor_pos.x-=1
+                if len(curr_line) > 0:
+                    left = curr_line[0:self.cursor_pos.x-1]
+                    right= curr_line[self.cursor_pos.x:]
+                    self.lines[self.cursor_pos.y] = left+right
+                    self.last_key_pressed = True
+                    self.changed = True
+                    self.cursor_pos.x-=1
+            else:
+                self.last_key = ''
         
         #see history
         if kb.is_pressed(Keys["seehistory"]) and not self.last_hot_key_pressed:
