@@ -45,6 +45,7 @@ class MainBuffer():
         self.show_prev_found_word_pressed = False
         self.see_history_pressed = False
         self.see_commands_pressed= False
+        self.removea_pressed = False
 
         self.last_key = ''
         self.last_key_pressed = False
@@ -225,7 +226,6 @@ class MainBuffer():
             lines_len = len(self.lines)
             if lines_len == 0:
                 self.lines.append(' ')
-
             if lines_len > 0:
                 curr_line_len = len(self.lines[self.cursor_pos.y])
                 if self.cursor_pos.x < curr_line_len:
@@ -242,6 +242,26 @@ class MainBuffer():
             
             self.last_key_pressed = True
             self.changed = True
+
+        #removing
+        if kb.is_pressed(Keys["removea"]) and not self.removea_pressed:
+            curr_line = self.lines[self.cursor_pos.y]
+            left = curr_line[0:self.cursor_pos.x]
+            right= curr_line[self.cursor_pos.x+1:]
+            self.lines[self.cursor_pos.y] = left+right
+            screen.clear()
+            self.removea_pressed = True
+            self.changed = True
+        if kb.is_pressed("backspace") and not self.last_key_pressed:
+            self.last_key = "backspace"
+            if self.cursor_pos.x -1 > -1:
+                curr_line = self.lines[self.cursor_pos.y]
+                left = curr_line[0:self.cursor_pos.x-1]
+                right= curr_line[self.cursor_pos.x:]
+                self.lines[self.cursor_pos.y] = left+right
+                self.last_key_pressed = True
+                self.changed = True
+                self.cursor_pos.x-=1
         
         #see history
         if kb.is_pressed(Keys["seehistory"]) and not self.see_history_pressed:
@@ -529,9 +549,9 @@ class MainBuffer():
         see_hist_not_pressed = not kb.is_pressed(Keys["seehistory"])
         see_commands = not kb.is_pressed(Keys["seecommands"])
         last_key_pressed = self.last_key != '' and not kb.is_pressed(self.last_key)
-        space_pressed = not kb.is_pressed("space")
+        remove_pressed = not kb.is_pressed(Keys["removea"])
         not_pressed = back_forward_not_pressed and up_down_not_pressed and scroll_not_pressed and scroll_along_x_not_pressed and see_hist_not_pressed and see_commands
-        if not_pressed:
+        if not_pressed and remove_pressed:
            self.move_forward_pressed  = False
            self.move_backward_pressed = False
            self.move_up_pressed       = False
@@ -544,6 +564,7 @@ class MainBuffer():
            self.show_prev_found_word_pressed = False
            self.see_history_pressed = False
            self.see_commands_pressed= False
+           self.removea_pressed = False
         if last_key_pressed:
            self.last_key_pressed = False
         

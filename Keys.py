@@ -22,4 +22,5 @@ Keys = {
     "seehistory" :"alt+h",   #see action history
     "seecommands":"alt+c",
     "replace"    :"ctrl+r",
+    "removea"     :"ctrl+d", #remove symbol after cursor
        }
