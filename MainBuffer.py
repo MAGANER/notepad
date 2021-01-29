@@ -33,20 +33,10 @@ class MainBuffer():
         self.printing_begin_y_pos = 0
         self.printing_begin_x_pos = 0
         
-        self.move_forward_pressed = False
-        self.move_backward_pressed= False
-        self.move_up_pressed      = False
-        self.move_down_pressed    = False
-        self.scroll_down_pressed  = False
-        self.scroll_up_pressed    = False
-        self.scroll_forward_pressed = False
-        self.scroll_backward_pressed= False
-        self.show_next_found_word_pressed = False
-        self.show_prev_found_word_pressed = False
-        self.see_history_pressed = False
-        self.see_commands_pressed= False
-        self.removea_pressed = False
 
+        self.last_hot_key = ''
+        self.last_hot_key_pressed = False
+        
         self.last_key = ''
         self.last_key_pressed = False
         
@@ -244,13 +234,14 @@ class MainBuffer():
             self.changed = True
 
         #removing
-        if kb.is_pressed(Keys["removea"]) and not self.removea_pressed:
+        if kb.is_pressed(Keys["removea"]) and not self.last_hot_key_pressed:
+            last_hot_key = Keys["removea"]
             curr_line = self.lines[self.cursor_pos.y]
             left = curr_line[0:self.cursor_pos.x]
             right= curr_line[self.cursor_pos.x+1:]
             self.lines[self.cursor_pos.y] = left+right
             screen.clear()
-            self.removea_pressed = True
+            self.last_hot_key_pressed = True
             self.changed = True
         if kb.is_pressed("backspace") and not self.last_key_pressed:
             self.last_key = "backspace"
@@ -264,7 +255,8 @@ class MainBuffer():
                 self.cursor_pos.x-=1
         
         #see history
-        if kb.is_pressed(Keys["seehistory"]) and not self.see_history_pressed:
+        if kb.is_pressed(Keys["seehistory"]) and not self.last_hot_key_pressed:
+            self.last_hot_key = Keys["seehistory"]
             if self.see_action_history:
                 self.see_action_history = False
             else:
@@ -272,7 +264,7 @@ class MainBuffer():
             screen.clear()
 
             self.cursor_pos = CursorPos()
-            self.see_history_pressed = True
+            self.last_hot_key_pressed = True
             
         #searching
         if kb.is_pressed(Keys["search"]):
@@ -407,14 +399,15 @@ class MainBuffer():
             self.action_history.append(self.action_line)
             self.changed = False
 
-        if kb.is_pressed(Keys["seecommands"]) and not self.see_commands_pressed:
+        if kb.is_pressed(Keys["seecommands"]) and not self.last_hot_key_pressed:
+            self.last_hot_key = Keys["seecommands"]
             if self.see_commands:
                 self.see_commands = False
             else:
                 self.see_commands = True
             screen.clear()
             self.cursor_pos = CursorPos()
-            self.see_commands_pressed = True
+            self.last_hot_key_pressed = True
             
         #go to line
         if kb.is_pressed(Keys["goto"]):
@@ -440,37 +433,41 @@ class MainBuffer():
             self.action_history.append(self.action_line)
             
         
-        if kb.is_pressed(Keys["movef"]) and not self.move_forward_pressed:
+        if kb.is_pressed(Keys["movef"]) and not self.last_hot_key_pressed:
+            self.last_hot_key = Keys["movef"]
             new_x = self.cursor_pos.x + 1
             if self.can_move(new_x,self.cursor_pos.y+self.cursor_pos.virtual_y):
                 self.cursor_pos.x = new_x
                 self.action_line = "move forward"
             else:
                 self.action_line = "can not move forward!"            
-            self.move_forward_pressed = True
+            self.last_hot_key_pressed = True
             self.action_history.append(self.action_line)
             
-        if kb.is_pressed(Keys["moveb"]) and not self.move_backward_pressed:
+        if kb.is_pressed(Keys["moveb"]) and not self.last_hot_key_pressed:
+            self.last_hot_key = Keys["moveb"]
             new_x = self.cursor_pos.x - 1
             if self.can_move(new_x,self.cursor_pos.y+self.cursor_pos.virtual_y):
                 self.cursor_pos.x = new_x
                 self.action_line = "move backward"
             else:
                 self.action_line = "can not move back!"      
-            self.move_backward_pressed = True
+            self.last_hot_key_pressed = True
             self.action_history.append(self.action_line)
             
-        if kb.is_pressed(Keys["movep"]) and not self.move_up_pressed:
+        if kb.is_pressed(Keys["movep"]) and not self.last_hot_key_pressed:
+            self.last_hot_key = Keys["movep"]
             new_y = self.cursor_pos.y - 1
             if self.can_move(self.cursor_pos.x,new_y):
                 self.cursor_pos.y = new_y
                 self.action_line = "move to previous line"
             else:
                 self.action_line = "can not move to previous line!"            
-            self.move_up_pressed = True
+            self.last_hot_key_pressed = True
             self.action_history.append(self.action_line)
             
-        if kb.is_pressed(Keys["moven"]) and not self.move_down_pressed:
+        if kb.is_pressed(Keys["moven"]) and not self.last_hot_key_pressed:
+            self.last_hot_key = Keys["moven"]
             new_y = self.cursor_pos.y + 1
             _can_move = self.can_move(self.cursor_pos.x,new_y)
             if _can_move:
@@ -485,11 +482,12 @@ class MainBuffer():
                 self.action_line = "move to next line"
             else:
                 self.action_line = "can not move to next line!"         
-            self.move_down_pressed = True
+            self.last_hot_key_pressed = True
             self.action_history.append(self.action_line)
 
         #scrolling
-        if kb.is_pressed(Keys["scrolld"]) and not self.scroll_down_pressed:
+        if kb.is_pressed(Keys["scrolld"]) and not self.last_hot_key_pressed:
+            self.last_hot_key = Keys["scrollup"]
             if self.printing_begin_y_pos < len(self.lines):
                 self.printing_begin_y_pos += 1
                 self.cursor_pos.virtual_y += 1
@@ -500,9 +498,10 @@ class MainBuffer():
                 self.action_line = "can not scroll down!"
                 self.print_action_line(screen)
             self.action_history.append(self.action_line)
-            self.scroll_down_pressed = True
+            self.last_hot_key_pressed = True
             
-        if kb.is_pressed(Keys["scrollup"]) and not self.scroll_up_pressed:
+        if kb.is_pressed(Keys["scrollup"]) and not self.last_hot_key_pressed:
+            self.last_hot_key = Keys["scrollup"]
             if self.printing_begin_y_pos > 0:
                 self.printing_begin_y_pos -= 1
                 self.cursor_pos.virtual_y -= 1
@@ -513,9 +512,10 @@ class MainBuffer():
                 self.action_line = "can not scroll up!"
                 self.print_action_line(screen)
             self.action_history.append(self.action_line)
-            self.scroll_up_pressed = True
+            self.last_hot_key_pressed = True
             
-        if kb.is_pressed(Keys["scrollf"]) and not self.scroll_forward_pressed:
+        if kb.is_pressed(Keys["scrollf"]) and not self.last_hot_key_pressed:
+            self.last_hot_key = Keys["scrollf"]
             max_elem_len = len(max(self.lines))
             if self.printing_begin_x_pos < max_elem_len:
                 self.printing_begin_x_pos += 1
@@ -526,9 +526,10 @@ class MainBuffer():
                 self.action_line = "can not scroll forward!"
                 self.print_action_line(screen)
             self.action_history.append(self.action_line)
-            self.scroll_forward_pressed = True
+            self.last_hot_key_pressed = True
             
-        if kb.is_pressed(Keys["scrollb"]) and not self.scroll_backward_pressed:
+        if kb.is_pressed(Keys["scrollb"]) and not self.last_hot_key_pressed:
+            self.last_hot_key = Keys["scrollb"]
             if self.printing_begin_x_pos > 0:
                 self.printing_begin_x_pos -= 1
                 self.cursor_pos.virtual_x -= 1
@@ -538,33 +539,15 @@ class MainBuffer():
                 self.action_line = "can not scroll backward!"
                 self.print_action_line(screen)
             self.action_history.append(self.action_line)
-            self.scroll_backward_pressed = True
+            self.last_hot_key_pressed = True
         #
         
         #
-        back_forward_not_pressed = not kb.is_pressed(Keys["movef"]) and not kb.is_pressed(Keys["moveb"])
-        up_down_not_pressed      = not kb.is_pressed(Keys["movep"]) and not kb.is_pressed(Keys["moven"])
-        scroll_not_pressed       = not kb.is_pressed(Keys["scrollup"]) and not kb.is_pressed(Keys["scrolld"])
-        scroll_along_x_not_pressed = not kb.is_pressed(Keys["scrollf"]) and not kb.is_pressed(Keys["scrollb"])
-        see_hist_not_pressed = not kb.is_pressed(Keys["seehistory"])
-        see_commands = not kb.is_pressed(Keys["seecommands"])
+
         last_key_pressed = self.last_key != '' and not kb.is_pressed(self.last_key)
-        remove_pressed = not kb.is_pressed(Keys["removea"])
-        not_pressed = back_forward_not_pressed and up_down_not_pressed and scroll_not_pressed and scroll_along_x_not_pressed and see_hist_not_pressed and see_commands
-        if not_pressed and remove_pressed:
-           self.move_forward_pressed  = False
-           self.move_backward_pressed = False
-           self.move_up_pressed       = False
-           self.move_down_pressed     = False
-           self.scroll_down_pressed   = False
-           self.scroll_up_pressed     = False
-           self.scroll_forward_pressed= False
-           self.scroll_backward_pressed= False
-           self.show_next_found_word_pressed = False
-           self.show_prev_found_word_pressed = False
-           self.see_history_pressed = False
-           self.see_commands_pressed= False
-           self.removea_pressed = False
+        last_hot_key_pressed = self.last_hot_key != '' and not kb.is_pressed(self.last_hot_key)
+        if last_hot_key_pressed:
+            self.last_hot_key_pressed = False
         if last_key_pressed:
            self.last_key_pressed = False
         
